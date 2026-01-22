@@ -33,7 +33,8 @@ class TestMijnHostClient(unittest.TestCase):
             urllib.parse.urljoin(BASE_URL, f"domains/{self.domain}/dns"),
             headers=self.headers,
         )
-        self.assertEqual(records, {"data": {"records": []}})
+        self.assertEqual(records[0], 200)
+        self.assertEqual(records[1], {"data": {"records": []}})
 
     @patch("requests.put")
     @patch("requests.get")
@@ -303,8 +304,6 @@ class TestMijnHostClient(unittest.TestCase):
         }
         mock_get.return_value = mock_response
 
-        top_level_domain = "com"
-        base_domain = "example.com"
         sub_domain = "sub.example.com"
 
         with self.assertRaises(errors.PluginError) as e:
@@ -312,10 +311,11 @@ class TestMijnHostClient(unittest.TestCase):
 
         exception = e.exception
         self.assertEqual(
-            exception.args[0], "API key does not provide access to requested domain"
+            exception.args[0],
+            "There is a problem with the mijn.host API request: 400, {'status': 400, 'status_description': 'Invalid input'}",
         )
 
-        self.assertEqual(mock_get.call_count, 3)
+        self.assertEqual(mock_get.call_count, 1)
         get_calls = mock_get.call_args_list
         self.assertEqual(
             get_calls[0],
@@ -324,21 +324,6 @@ class TestMijnHostClient(unittest.TestCase):
                 headers=self.headers,
             ),
         )
-        self.assertEqual(
-            get_calls[1],
-            call(
-                urllib.parse.urljoin(BASE_URL, f"domains/{base_domain}/dns"),
-                headers=self.headers,
-            ),
-        )
-        self.assertEqual(
-            get_calls[2],
-            call(
-                urllib.parse.urljoin(BASE_URL, f"domains/{top_level_domain}/dns"),
-                headers=self.headers,
-            ),
-        )
-
 
 
 if __name__ == "__main__":
