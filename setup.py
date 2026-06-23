@@ -11,7 +11,6 @@ install_requires = [
     "cryptography>=3.2.1",
     "distro==1.9.0",
     "idna==3.8",
-    "josepy==1.14.0",
     "parsedatetime==2.6",
     "pycparser==2.22",
     "PyOpenSSL>=25.0.0",
