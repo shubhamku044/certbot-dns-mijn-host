@@ -78,13 +78,19 @@ class MijnHostClient(object):
             "API-Key": api_key,
         }
 
-    def _handle_response(self, resp: requests.Response, name: str = "something") -> Any:
-        if resp.status_code not in (200, 202):
+    @staticmethod
+    def _handle_response(
+        resp: requests.Response, name: str = "something"
+    ) -> tuple[int, Any]:
+        if resp.status_code in (200, 400):
+            try:
+                return resp.status_code, resp.json()
+            except json.decoder.JSONDecodeError:
+                raise errors.PluginError(
+                    f"API response for action '{name}' with non-json: {resp.text}"
+                )
+        else:
             raise MijnHostClientConnectionError(resp)
-        try:
-            return resp.json()
-        except json.decoder.JSONDecodeError:
-            raise errors.PluginError(f"API response with non-json: {resp.text}")
 
     def get_records(self, domain):
         url = urllib.parse.urljoin(BASE_URL, f"domains/{domain}/dns")
@@ -102,24 +108,26 @@ class MijnHostClient(object):
 
     def get_txt_records_and_base_domain(self, domain: str):
         for base_domain_guess in dns_common.base_domain_name_guesses(domain):
-            try:
-                records = (
-                    self.get_records(base_domain_guess)
-                    .get("data", {})
-                    .get("records", [])
-                )
+            response = self.get_records(base_domain_guess)
+            if response[0] == 200:
+                records = response[1].get("data", {}).get("records", [])
                 base_domain = base_domain_guess
-                break
-            except MijnHostClientConnectionError as e:
-                # Response 400 means valid API token but invalid domain
-                if e.status_code != 400:
-                    raise
+                return records, base_domain
+            if response[0] == 400:
+                if (
+                    response[1].get("status_description", {})
+                    != "You have no access to this resource."
+                ):
+                    raise errors.PluginError(
+                        f"There is a problem with the mijn.host API request: {response[0]}, {response[1]}"
+                    )
+                else:
+                    # Expected scenario if we have a subdomain
+                    continue
         else:
             raise errors.PluginError(
                 "API key does not provide access to requested domain"
             )
-
-        return records, base_domain
 
     def add_txt_record(
         self, domain: str, record_name: str, record_content: str, ttl: int
