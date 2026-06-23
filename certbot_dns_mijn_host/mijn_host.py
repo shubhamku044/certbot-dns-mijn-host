@@ -1,6 +1,6 @@
 import json
 import logging
-import urllib
+import urllib.parse
 from typing import Any, Callable, Optional
 
 import requests

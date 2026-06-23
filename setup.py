@@ -24,7 +24,7 @@ install_requires = [
     "wheel==0.44.0",
 ]
 
-VERSION = "0.0.8"
+VERSION = "0.0.9"
 
 DESCRIPTION = "Certbot DNS plugin for mijn.host service, enabling the automation of DNS-01 challenges for issuing wildcard SSL certificates. This plugin simplifies the process of obtaining and renewing SSL certificates by integrating directly with the DNS API of mijn.host Service, making it ideal for system administrators and DevOps professionals managing secure web services."
 
@@ -38,7 +38,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://pypi.org/project/certbot-dns-mijn-host/",
-    python_requires=">=2.7",
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Plugins",
